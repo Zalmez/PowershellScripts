@@ -22,7 +22,7 @@
         foreach ($children in $allChildren) {
             $ScriptPath = $ScriptParentFolder + $children.Name
             $FullPath = $ScriptPath + "\" + $ScriptName
-            #write-Output "Full Script path: " $FullPath
+            write-Output "Full Script path: " $FullPath
             if (doesPathExist($FullPath) -eq $true) {
                 $confirmedPaths.Add($FullPath)
             }
@@ -34,18 +34,18 @@
             Write-Output "Log is empty"
             for ($i = 0; $i -lt $confirmedPaths.Count; $i++) {
                 #$confirmedPaths.GetEnumerator() | Sort-Object -Descending
-                $confirmedPaths[i].GetType().FullName
                 Write-Output "===================getting type==================="
-                Write-Output $confirmedPaths
+                Write-Output $confirmedPaths | ForEach-Object {$_.Key}
                 #Add-Content $LogFile -Value $confirmedPaths[$i]
             }
         }else{
             for ($i = 0; $i -lt $confirmedPaths.Count; $i++) {
                 foreach($line in $hasScriptRunned){
-                    if($confirmedPaths[$i] -eq $line){
+                    if($confirmedPaths.Contains($line)){
                         break;
                     }else{
-                        Invoke-Expression $confirmedPaths[$i].GetEnumerator().ToString()
+                        #Write-Output $confirmedPaths | ForEach-Object {$_.Key}
+                        #Invoke-Expression $confirmedPaths[$i]
 
                         #debugging
                         #Write-Output "Logging and script running disabled"
