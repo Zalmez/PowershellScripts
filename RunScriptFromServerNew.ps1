@@ -79,5 +79,3 @@ function doesPathExist ([string]$pathToTest) {
 
 #Run the function
 runScriptFromServer
-
-# {} | $
