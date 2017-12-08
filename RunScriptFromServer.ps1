@@ -1,66 +1,60 @@
 ﻿Function runScriptFromServer() {
+    [string]$ScriptParentFolder = "C:\Test\" #Hoved mappe(aka ParentFolder)
+    [string]$ScriptName = "test_Script.ps1"
     [string]$LogFile = "C:\logs\testLog.txt"
-    [string]$ScriptParentFolder = "M:\pc\Dokumenter\GitHub\PowershellScripts\" #Hoved mappe(aka ParentFolder)
-    [string]$ScriptName = "test_script.ps1"
     [string]$LogActionFile = "C:\ScriptLogs\ActionLog.txt"
     $testGivenPath = testPath($ScriptParentFolder)
     
     $doesLogFileExist = testPath($LogFile)
 
-    #$logContent = Get-Content $LogFile 
+    # Noen av disse variabelnavnene er litt forvirrende. Denne burde kanskje hete $logFileContents eller noe sånt (for meg ser det ut som at det burde være en boolean)
+    $hasScriptRunned = Get-Content $LogFile
 
     if ($doesLogFileExist -eq $false) {
         New-Item -Path $LogFile -Type File -Force
     }
 
     if ($testGivenPath -eq $true ) {
-        $allChildren = Get-ChildItem -path $ScriptParentFolder -Recurse -Directory | Select-Object Name
-        foreach ($children in $allChildren) {
+        #Write-Output  "Path: '$($ScriptParentFolder)'  exists!"
+        $allChildren = Get-ChildItem -path $ScriptParentFolder -Recurse -Directory | Select-Object Name        
+            
+        # Her er hoveddelen av skriptet ditt. Du vil gå gjennom alle mappene ($children) ...
+        foreach ($children in $allChildren) {           
+            $hasCurrentScriptRan = $false
             $ScriptPath = $ScriptParentFolder + $children.Name
-            print($ScriptPath)
             $FullPath = $ScriptPath + "\" + $ScriptName
-            #print("Full Script path: " + $FullPath)
-            if (testPath($FullPath)) {
-                if (readLogFile($FullPath) -eq $false -and -ne $null) {
-                    #Invoke-Expression $FullPath
-                    Add-Content $LogFile $FullPath        
+            write-Output "Full Script path: " + $FullPath
+            # ... sjekke om skriptet faktisk finnes ...
+            if (testPath($FullPath) -eq $true) {                                
+                # Gå gjennom hver linje i loggfila (merk at du ikke trenger å ta spesiell høyde for at fila ikke inneholder noen linjer -- det betyr bare at denne løkka ikke kjører)
+                foreach ($line in $hasScriptRunned) {                        
+                    if ($FullPath -eq $line) {                            
+                        # Hvis vi finner en linje som matcher navnet på skriptet så har det blitt kjørt fra før. Sett et flagg og stopp.
+                        $hasCurrentScriptRan = $true                        
+                        break
+                    } 
+                }                
+
+                # Når vi har gått gjennom alle linjene kan vi se om flagget har blitt satt, hvis ikke kjører vi skriptet.
+                if (! $hasCurrentScriptRan) { # (! $hasCurrentScriptRan) tilsvarer ($hasCurrentScriptRan -eq $false)
+                    Invoke-Expression $FullPath
+                    Add-Content $LogFile -Value $FullPath
                 }
-                else {
-                    printDebug("Path exists in logs")
-                }
-            }
-            else {Write-Output "Ignoring folder. Script not found"}
-        
-        }
+            } else {
+                Write-Output "Ignoring folder. Script not found"
+            }        
+        }    
+    } else {
+        Write-Output "The Path: '$($PATH)' does not exist"
     }
 }
 
-#laget for debugging
-function readLogFile($pathToControll) {
-    $LogContent = Get-Content -Path "C:\logs\testLog.txt"
-    $amountOfLines = 0
-    $isLineEqual #( = Set-Variable -Visibility global -Value $false) Har ikke prøvd å gjøre den global kan hjelpe
-    if ($LogContent -eq $null) {
-        printDebug("There's no content in the log file")
-        $isLineEqual = $false
-    }
-    foreach ($line in $LogContent) {
-        $amountOfLines = $amountOfLines + 1
-        print($amountOfLines)
-        print("Path from log: " + $line)
-        printDebug("Controlled Path: " + $pathToControll)
+function readLogFile() {
+    $ReadLogFile = Get-Content -Path $LogFile
 
-        if ($pathToControll -ne $line) {
-            $isLineEqual = $False 
-            
-        }
-        else {
-            $isLineEqual = $True
-            break
-        }
-        printDebug($isLineEqual)
+    foreach ($line in $ReadLogFile) {
+        Write-Output $line
     }
-    return $isLineEqual
 
 }
 
@@ -68,13 +62,5 @@ function testPath ([string]$pathToTest) {
     Test-Path -Path $pathToTest
 }
 
-function print ([string]$textToPrint) {
-    Write-Output $textToPrint
-}
-
-function printDebug($textToPrint) {
-    Write-Debug $textToPrint
-}
-
-#readLogFile
 runScriptFromServer
+#readLogFile
