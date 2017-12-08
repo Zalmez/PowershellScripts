@@ -21,13 +21,15 @@
             $FullPath = $ScriptPath + "\" + $ScriptName
             #print("Full Script path: " + $FullPath)
             if (testPath($FullPath)) {
-                if(readLogFile($FullPath) -eq $false){
-                    print("Full Path: " + $FullPath)
+                if (readLogFile($FullPath) -eq $false -and -ne $null) {
+                    #Invoke-Expression $FullPath
                     Add-Content $LogFile $FullPath        
-                }else{
-                    print("Path exists in logs")
                 }
-            }else {Write-Output "Ignoring folder. Script not found"}
+                else {
+                    printDebug("Path exists in logs")
+                }
+            }
+            else {Write-Output "Ignoring folder. Script not found"}
         
         }
     }
@@ -35,23 +37,30 @@
 
 #laget for debugging
 function readLogFile($pathToControll) {
-    $pathToControll = "M:\pc\Dokumenter\GitHub\PowershellScripts\tests\test_script.ps1"
     $LogContent = Get-Content -Path "C:\logs\testLog.txt"
     $amountOfLines = 0
-    if($LogContent -eq $null){
-        print("There's no content in the log file")
-        return $false
+    $isLineEqual #( = Set-Variable -Visibility global -Value $false) Har ikke prøvd å gjøre den global kan hjelpe
+    if ($LogContent -eq $null) {
+        printDebug("There's no content in the log file")
+        $isLineEqual = $false
     }
     foreach ($line in $LogContent) {
         $amountOfLines = $amountOfLines + 1
         print($amountOfLines)
         print("Path from log: " + $line)
-        if($pathToControll -eq $line){
-            return $true
-        }else{
-            return $false
+        printDebug("Controlled Path: " + $pathToControll)
+
+        if ($pathToControll -ne $line) {
+            $isLineEqual = $False 
+            
         }
+        else {
+            $isLineEqual = $True
+            break
+        }
+        printDebug($isLineEqual)
     }
+    return $isLineEqual
 
 }
 
@@ -61,6 +70,10 @@ function testPath ([string]$pathToTest) {
 
 function print ([string]$textToPrint) {
     Write-Output $textToPrint
+}
+
+function printDebug($textToPrint) {
+    Write-Debug $textToPrint
 }
 
 #readLogFile
